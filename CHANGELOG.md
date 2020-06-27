@@ -7,3 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## 1.0.0 - 2020-06-27
 ### Added
 - Initial release
+
+## 1.1.0 - 2020-06-27
+### Added
+- New command to add a default set of questions

@@ -21,6 +21,7 @@ const (
 	commandIcebreakerClearAllApproved  = "icebreaker clearall approved"
 	commandIcebreakerShowProposals     = "icebreaker show proposals"
 	commandIcebreakerShowApproved      = "icebreaker show approved"
+	commandIcebreakerResetToDefault    = "icebreaker reset questions"
 )
 
 func (p *Plugin) registerCommands() error {
@@ -91,6 +92,13 @@ func (p *Plugin) registerCommands() error {
 	}); err != nil {
 		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerShowApproved))
 	}
+	if err := p.API.RegisterCommand(&model.Command{
+		Trigger:          commandIcebreakerResetToDefault,
+		AutoComplete:     true,
+		AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin",
+	}); err != nil {
+		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerResetToDefault))
+	}
 	return nil
 }
 
@@ -116,6 +124,8 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			return p.executeCommandIcebreakerShowProposals(args), nil
 		} else if strings.HasPrefix(trigger, commandIcebreakerShowApproved) {
 			return p.executeCommandIcebreakerShowApproved(args), nil
+		} else if strings.HasPrefix(trigger, commandIcebreakerResetToDefault) {
+			return p.executeCommandIcebreakerResetToDefault(args), nil
 		} else {
 			return p.executeCommandIcebreaker(args), nil
 		}
@@ -124,6 +134,23 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 			Text:         fmt.Sprintf("Unknown command: " + args.Command),
 		}, nil
+	}
+}
+
+func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
+	sourceUser, _ := p.API.GetUser(args.UserId)
+	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "You need to be admin in order to clear all proposed questions",
+		}
+	}
+
+	p.FillDefaultQuestions(args.TeamId, args.ChannelId)
+
+	return &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+		Text:         fmt.Sprintf("All questions have been reset to the default ones. Beware the pitchforks!"),
 	}
 }
 
