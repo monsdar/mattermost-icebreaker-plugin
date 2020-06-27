@@ -2,9 +2,28 @@
 This plugin adds the ability to ask random users Icebreaker questions in a channel.
 
 ```
-Mike: /icebreaker
+Mike:           /icebreaker
+IceBreaker Bot: Hey John! Emacs or Vim?
+John:           VSCode! But with Vim bindings...
+```
+
+```
+Mike:           /icebreaker add What's your favorite sports?
+IceBreaker Bot: Thanks John! Added your proposal: 'What's your favorite sports?'. Total number of proposals: 1
+Admin:          /icebreaker show proposals
+IceBreaker Bot: Proposed questions:
+                1. John: What's your favorite sports?
+Admin:          /icebreaker approve 1
+IceBreaker Bot: Question has been approved: What's your favorite sports?
+Mike:           /icebreaker
+IceBreaker Bot: Hey John! What's your favorite sports?
+John:           I love playing basketball! Anyone else here? We can meet up tomorrow and play some 3on3...
+```
+
+```
+Mike:           /icebreaker
 IceBreaker Bot: Hey John! What's your favorite superhero?
-John: Wtf Mike! Stop triggering this bot every 5 minutes!
+John:           Wtf Mike! Stop triggering this bot every 5 minutes!
 ```
 
 ## Why?
