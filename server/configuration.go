@@ -69,15 +69,17 @@ func (p *Plugin) setConfiguration(configuration *configuration) {
 }
 
 // OnConfigurationChange is invoked when configuration changes may have been made.
+//
+// This demo implementation ensures the configured demo user and channel are created for use
+// by the plugin.
 func (p *Plugin) OnConfigurationChange() error {
-	var configuration = new(configuration)
+	configuration := p.getConfiguration().Clone()
 
 	// Load the public configuration fields from the Mattermost server configuration.
-	if err := p.API.LoadPluginConfiguration(configuration); err != nil {
-		return errors.Wrap(err, "failed to load plugin configuration")
+	if loadConfigErr := p.API.LoadPluginConfiguration(configuration); loadConfigErr != nil {
+		return errors.Wrap(loadConfigErr, "failed to load plugin configuration")
 	}
 
 	p.setConfiguration(configuration)
-
 	return nil
 }
