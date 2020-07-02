@@ -32,12 +32,8 @@ apply:
 
 ## Runs golangci-lint and eslint.
 .PHONY: check-style
-check-style: webapp/.npminstall golangci-lint
+check-style: golangci-lint
 	@echo Checking for style guide compliance
-
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && npm run lint
-endif
 
 ## Run golangci-lint on codebase.
 .PHONY: golangci-lint
@@ -60,28 +56,6 @@ ifneq ($(HAS_SERVER),)
 	cd server && env GOOS=windows GOARCH=amd64 $(GO) build $(GO_BUILD_FLAGS) -o dist/plugin-windows-amd64.exe;
 endif
 
-## Ensures NPM dependencies are installed without having to run this all the time.
-webapp/.npminstall: webapp/package.json
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) install
-	touch $@
-endif
-
-## Builds the webapp, if it exists.
-.PHONY: webapp
-webapp: webapp/.npminstall
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) run build;
-endif
-
-## Builds the webapp in debug mode, if it exists.
-.PHONY: webapp-debug
-webapp-debug: webapp/.npminstall
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && \
-	$(NPM) run debug;
-endif
-
 ## Generates a tar bundle of the plugin for install.
 .PHONY: bundle
 bundle:
@@ -98,17 +72,13 @@ ifneq ($(HAS_SERVER),)
 	mkdir -p dist/$(PLUGIN_ID)/server/dist;
 	cp -r server/dist/* dist/$(PLUGIN_ID)/server/dist/;
 endif
-ifneq ($(HAS_WEBAPP),)
-	mkdir -p dist/$(PLUGIN_ID)/webapp/dist;
-	cp -r webapp/dist/* dist/$(PLUGIN_ID)/webapp/dist/;
-endif
 	cd dist && tar -cvzf $(BUNDLE_NAME) $(PLUGIN_ID)
 
 	@echo plugin built at: dist/$(BUNDLE_NAME)
 
 ## Builds and bundles the plugin.
 .PHONY: dist
-dist:	apply server webapp bundle
+dist:	apply server bundle
 
 ## Installs the plugin to a (development) server.
 ## It uses the API if appropriate environment variables are defined,
@@ -121,16 +91,13 @@ deploy: dist
 debug-deploy: debug-dist deploy
 
 .PHONY: debug-dist
-debug-dist: apply server webapp-debug bundle
+debug-dist: apply server bundle
 
 ## Runs any lints and unit tests defined for the server and webapp, if they exist.
 .PHONY: test
 test: webapp/.npminstall
 ifneq ($(HAS_SERVER),)
 	$(GO) test -v $(GO_TEST_FLAGS) ./server/...
-endif
-ifneq ($(HAS_WEBAPP),)
-	cd webapp && $(NPM) run fix && $(NPM) run test;
 endif
 
 ## Creates a coverage report for the server code.
@@ -159,12 +126,6 @@ clean:
 ifneq ($(HAS_SERVER),)
 	rm -fr server/coverage.txt
 	rm -fr server/dist
-endif
-ifneq ($(HAS_WEBAPP),)
-	rm -fr webapp/.npminstall
-	rm -fr webapp/junit.xml
-	rm -fr webapp/dist
-	rm -fr webapp/node_modules
 endif
 	rm -fr build/bin/
 
