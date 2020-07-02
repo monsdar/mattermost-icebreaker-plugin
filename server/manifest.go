@@ -15,7 +15,7 @@ const manifestStr = `
   "id": "com.nilsbrinkmann.icebreaker",
   "name": "Icebreaker Plugin",
   "description": "This plugin creates a bot which asks random questions",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
@@ -24,14 +24,6 @@ const manifestStr = `
       "windows-amd64": "server/dist/plugin-windows-amd64.exe"
     },
     "executable": ""
-  },
-  "webapp": {
-    "bundle_path": "webapp/dist/main.js"
-  },
-  "settings_schema": {
-    "header": "",
-    "footer": "",
-    "settings": []
   }
 }
 `
