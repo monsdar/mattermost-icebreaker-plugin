@@ -13,15 +13,15 @@ import (
 
 const (
 	commandIcebreaker                  = "icebreaker"
-	commandIcebreakerAdd               = "icebreaker add"
-	commandIcebreakerApprove           = "icebreaker approve"
-	commandIcebreakerReject            = "icebreaker reject"
-	commandIcebreakerRemove            = "icebreaker remove"
-	commandIcebreakerClearAllProposals = "icebreaker clearall proposals"
-	commandIcebreakerClearAllApproved  = "icebreaker clearall approved"
-	commandIcebreakerShowProposals     = "icebreaker show proposals"
-	commandIcebreakerShowApproved      = "icebreaker show approved"
-	commandIcebreakerResetToDefault    = "icebreaker reset questions"
+	commandIcebreakerAdd               = commandIcebreaker + " add"
+	commandIcebreakerApprove           = commandIcebreaker + " approve"
+	commandIcebreakerReject            = commandIcebreaker + " reject"
+	commandIcebreakerRemove            = commandIcebreaker + " remove"
+	commandIcebreakerClearAllProposals = commandIcebreaker + " clearall proposals"
+	commandIcebreakerClearAllApproved  = commandIcebreaker + " clearall approved"
+	commandIcebreakerShowProposals     = commandIcebreaker + " show proposals"
+	commandIcebreakerShowApproved      = commandIcebreaker + " show approved"
+	commandIcebreakerResetToDefault    = commandIcebreaker + " reset questions"
 )
 
 func (p *Plugin) registerCommands() error {
