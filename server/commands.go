@@ -318,7 +318,7 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 		}
 	}
 	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
-	data.ApprovedQuestions[args.TeamId][args.ChannelId] = Extend(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
+	data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
 	//from https://stackoverflow.com/a/37335777/199513
 	data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
 
@@ -455,7 +455,7 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 		}
 	}
 
-	data.ProposedQuestions[args.TeamId][args.ChannelId] = Extend(data.ProposedQuestions[args.TeamId][args.ChannelId], newQuestion)
+	data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId], newQuestion)
 
 	p.WriteToStorage(&data)
 

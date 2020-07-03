@@ -33,17 +33,3 @@ func (p *Plugin) GetRandomUser(channelID string) (*model.User, *model.AppError) 
 	}
 	return targetuser, nil
 }
-
-//Extend function from https://blog.golang.org/slices
-func Extend(slice []Question, element Question) []Question {
-	n := len(slice)
-	if n == cap(slice) {
-		// Slice is full; must grow
-		newSlice := make([]Question, len(slice), len(slice)+1)
-		copy(newSlice, slice)
-		slice = newSlice
-	}
-	slice = slice[0 : n+1]
-	slice[n] = element
-	return slice
-}
