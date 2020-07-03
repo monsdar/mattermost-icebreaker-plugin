@@ -25,80 +25,69 @@ const (
 )
 
 func (p *Plugin) registerCommands() error {
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreaker,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Ask an icebreaker",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreaker))
+	commands := [...]model.Command{
+		model.Command{
+			Trigger:          commandIcebreaker,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Ask an icebreaker",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerAdd,
+			AutoComplete:     true,
+			AutoCompleteHint: "<question>",
+			AutoCompleteDesc: "Propose as new icebreaker question",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerApprove,
+			AutoComplete:     true,
+			AutoCompleteHint: "<id>",
+			AutoCompleteDesc: "Approve a proposed IceBreaker question. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerReject,
+			AutoComplete:     true,
+			AutoCompleteHint: "<id>",
+			AutoCompleteDesc: "Reject a proposed IceBreaker question. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerRemove,
+			AutoComplete:     true,
+			AutoCompleteHint: "<id>",
+			AutoCompleteDesc: "Remove an already approved IceBreaker question. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerClearAllProposals,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Remove ALL proposed IceBreaker question. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerClearAllApproved,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Remove ALL approved IceBreaker question. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerShowProposals,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Show a list of proposed Icebreaker questions. Channel owners only",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerShowApproved,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Show the list of Icebreaker questions",
+		},
+		model.Command{
+			Trigger:          commandIcebreakerResetToDefault,
+			AutoComplete:     true,
+			AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin",
+		},
 	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerAdd,
-		AutoComplete:     true,
-		AutoCompleteHint: "<question>",
-		AutoCompleteDesc: "Propose as new icebreaker question",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerAdd))
+
+	for _, command := range commands {
+		if err := p.API.RegisterCommand(&command); err != nil {
+			return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerResetToDefault))
+		}
 	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerApprove,
-		AutoComplete:     true,
-		AutoCompleteHint: "<id>",
-		AutoCompleteDesc: "Approve a proposed IceBreaker question. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerApprove))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerReject,
-		AutoComplete:     true,
-		AutoCompleteHint: "<id>",
-		AutoCompleteDesc: "Reject a proposed IceBreaker question. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerReject))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerRemove,
-		AutoComplete:     true,
-		AutoCompleteHint: "<id>",
-		AutoCompleteDesc: "Remove an already approved IceBreaker question. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerRemove))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerClearAllProposals,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Remove ALL proposed IceBreaker question. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerClearAllProposals))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerClearAllApproved,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Remove ALL approved IceBreaker question. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerClearAllApproved))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerShowProposals,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Show a list of proposed Icebreaker questions. Channel owners only",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerShowProposals))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerShowApproved,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Show the list of Icebreaker questions",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerShowApproved))
-	}
-	if err := p.API.RegisterCommand(&model.Command{
-		Trigger:          commandIcebreakerResetToDefault,
-		AutoComplete:     true,
-		AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin",
-	}); err != nil {
-		return errors.Wrapf(err, fmt.Sprintf("Failed to register %s command", commandIcebreakerResetToDefault))
-	}
+
 	return nil
 }
 
