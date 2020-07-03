@@ -146,7 +146,7 @@ func requireAdminUser(sourceUser *model.User) *model.CommandResponse {
 	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to clear all proposed questions",
+			Text:         "Error: You need to be admin in order to clear all proposed questions",
 		}
 	}
 	return nil
@@ -212,7 +212,7 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 	if len(commandFields) <= 2 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Please enter a valid index",
+			Text:         "Error: Please enter a valid index",
 		}
 	}
 	indexStr := commandFields[2]
@@ -220,13 +220,13 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 	if len(data.ApprovedQuestions[args.TeamId][args.ChannelId]) <= index {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 
@@ -256,7 +256,7 @@ func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.
 	if len(commandFields) <= 2 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Please enter a valid index",
+			Text:         "Error: Please enter a valid index",
 		}
 	}
 	indexStr := commandFields[2]
@@ -264,13 +264,13 @@ func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) <= index {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 
@@ -300,7 +300,7 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 	if len(commandFields) <= 2 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Please enter a valid index",
+			Text:         "Error: Please enter a valid index",
 		}
 	}
 	indexStr := commandFields[2]
@@ -308,13 +308,13 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) <= index {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Your given index of %s is not valid", indexStr),
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
 		}
 	}
 	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
@@ -384,7 +384,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	if len(data.ApprovedQuestions[args.TeamId][args.ChannelId]) == 0 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "There are no approved questions that I can ask...",
+			Text:         "Error: There are no approved questions that I can ask. Be the first one to propose a question by using '/icebreaker add <question>'",
 		}
 	}
 
@@ -393,7 +393,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "There is no user I can ask a question for...",
+			Text:         "Error: Cannot get a user to ask a question for...",
 		}
 	}
 
@@ -408,7 +408,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	}
 	_, err = p.API.CreatePost(post)
 	if err != nil {
-		const errorMessage = "Failed to create post"
+		const errorMessage = "Error: Failed to create post"
 		p.API.LogError(errorMessage, "err", err.Error())
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
@@ -426,7 +426,7 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 	if len(givenQuestion) <= 0 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Please enter a question",
+			Text:         "Error: Please enter a question",
 		}
 	}
 
@@ -442,7 +442,7 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 		if question.Question == newQuestion.Question {
 			return &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         "Your question has already been proposed",
+				Text:         "Error: Your question has already been proposed",
 			}
 		}
 	}
@@ -450,7 +450,7 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 		if question.Question == newQuestion.Question {
 			return &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         "Your question has already been approved",
+				Text:         "Error: Your question has already been approved",
 			}
 		}
 	}
