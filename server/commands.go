@@ -72,12 +72,12 @@ func (p *Plugin) registerCommands() error {
 		model.Command{
 			Trigger:          commandIcebreakerShowApproved,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Show the list of Icebreaker questions",
+			AutoCompleteDesc: "Show the list of Icebreaker questions. Channel owners only",
 		},
 		model.Command{
 			Trigger:          commandIcebreakerResetToDefault,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin",
+			AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin. Channel owners only",
 		},
 	}
 
@@ -93,10 +93,7 @@ func (p *Plugin) registerCommands() error {
 // ExecuteCommand executes a command that has been previously registered via the RegisterCommand
 // API.
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	commandMap := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
-		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerAdd(args), nil
-		},
+	adminCommands := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
 		commandIcebreakerApprove: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerApprove(args), nil
 		},
@@ -121,6 +118,12 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		commandIcebreakerResetToDefault: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerResetToDefault(args), nil
 		},
+	}
+
+	userCommands := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
+		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreakerAdd(args), nil
+		},
 		//this needs to be last, as prefix `/icebreaker` is also part of the above commands
 		commandIcebreaker: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreaker(args), nil
@@ -128,13 +131,26 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	trigger := strings.TrimPrefix(args.Command, "/")
-	for key, value := range commandMap {
+
+	//first check for admin commands, make sure the user has the right permission
+	for key, value := range adminCommands {
+		if strings.HasPrefix(trigger, key) {
+			sourceUser, _ := p.API.GetUser(args.UserId)
+			if response := requireAdminUser(sourceUser); response != nil {
+				return response, nil
+			}
+			return value(args)
+		}
+	}
+
+	//then go for the user commands
+	for key, value := range userCommands {
 		if strings.HasPrefix(trigger, key) {
 			return value(args)
 		}
 	}
 
-	//return an error message when the command has not been detected
+	//return an error message when the command has not been detected at all
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 		Text:         fmt.Sprintf("Unknown command: " + args.Command),
@@ -142,11 +158,6 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 }
 
 func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	p.FillDefaultQuestions(args.TeamId, args.ChannelId)
 
 	return &model.CommandResponse{
@@ -156,11 +167,6 @@ func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs)
 }
 
 func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 	lenBefore := len(data.ProposedQuestions[args.TeamId][args.ChannelId])
 	data.ProposedQuestions[args.TeamId][args.ChannelId] = nil
@@ -173,11 +179,6 @@ func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandAr
 }
 
 func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 	lenBefore := len(data.ApprovedQuestions[args.TeamId][args.ChannelId])
 	data.ApprovedQuestions[args.TeamId][args.ChannelId] = nil
@@ -190,11 +191,6 @@ func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArg
 }
 
 func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
 	index, errResponse := getIndex(args.Command, data.ApprovedQuestions[args.TeamId][args.ChannelId])
@@ -217,11 +213,6 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 }
 
 func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
 	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
@@ -244,11 +235,6 @@ func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.
 }
 
 func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
 	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
@@ -270,11 +256,6 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 }
 
 func (p *Plugin) executeCommandIcebreakerShowProposals(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
-	if response := requireAdminUser(sourceUser); response != nil {
-		return response
-	}
-
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
 	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) == 0 {
