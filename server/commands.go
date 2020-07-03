@@ -406,8 +406,8 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 		UserId:    p.botID,
 		Message:   message,
 	}
-	_, err = p.API.CreatePost(post)
-	if err != nil {
+
+	if _, err = p.API.CreatePost(post); err != nil {
 		const errorMessage = "Error: Failed to create post"
 		p.API.LogError(errorMessage, "err", err.Error())
 		return &model.CommandResponse{
