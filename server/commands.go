@@ -432,7 +432,7 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 
 	newQuestion := Question{}
 	creator, _ := p.API.GetUser(args.UserId)
-	newQuestion.Creator = creator.Username
+	newQuestion.Creator = creator.Id
 	newQuestion.Question = givenQuestion
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
