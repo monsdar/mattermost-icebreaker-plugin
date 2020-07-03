@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"strconv"
 	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
@@ -142,16 +141,6 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}, nil
 }
 
-func requireAdminUser(sourceUser *model.User) *model.CommandResponse {
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: You need to be admin in order to clear all proposed questions",
-		}
-	}
-	return nil
-}
-
 func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
 	if response := requireAdminUser(sourceUser); response != nil {
@@ -208,26 +197,9 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	commandFields := strings.Fields(args.Command)
-	if len(commandFields) <= 2 {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: Please enter a valid index",
-		}
-	}
-	indexStr := commandFields[2]
-	index, err := strconv.Atoi(indexStr)
-	if err != nil {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
-	}
-	if len(data.ApprovedQuestions[args.TeamId][args.ChannelId]) <= index {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
+	index, errResponse := getIndex(args.Command, data.ApprovedQuestions[args.TeamId][args.ChannelId])
+	if errResponse != nil {
+		return errResponse
 	}
 
 	question := data.ApprovedQuestions[args.TeamId][args.ChannelId][index]
@@ -252,26 +224,9 @@ func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	commandFields := strings.Fields(args.Command)
-	if len(commandFields) <= 2 {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: Please enter a valid index",
-		}
-	}
-	indexStr := commandFields[2]
-	index, err := strconv.Atoi(indexStr)
-	if err != nil {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
-	}
-	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) <= index {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
+	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
+	if errResponse != nil {
+		return errResponse
 	}
 
 	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
@@ -296,27 +251,11 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	commandFields := strings.Fields(args.Command)
-	if len(commandFields) <= 2 {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: Please enter a valid index",
-		}
+	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
+	if errResponse != nil {
+		return errResponse
 	}
-	indexStr := commandFields[2]
-	index, err := strconv.Atoi(indexStr)
-	if err != nil {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
-	}
-	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) <= index {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
-		}
-	}
+
 	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
 	data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
 	//from https://stackoverflow.com/a/37335777/199513

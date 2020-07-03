@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"strconv"
+	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
 )
@@ -32,4 +35,40 @@ func (p *Plugin) GetRandomUser(channelID string) (*model.User, *model.AppError) 
 		}
 	}
 	return targetuser, nil
+}
+
+func requireAdminUser(sourceUser *model.User) *model.CommandResponse {
+	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Error: You need to be admin in order to clear all proposed questions",
+		}
+	}
+	return nil
+}
+
+func getIndex(command string, givenArray []Question) (int, *model.CommandResponse) {
+	commandFields := strings.Fields(command)
+	if len(commandFields) <= 2 {
+		return 0, &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Error: Please enter a valid index",
+		}
+	}
+	indexStr := commandFields[2]
+	index, err := strconv.Atoi(indexStr)
+	if err != nil {
+		return 0, &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
+		}
+	}
+	if len(givenArray) <= index {
+		return 0, &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         fmt.Sprintf("Error: Your given index of %s is not valid", indexStr),
+		}
+	}
+
+	return index, nil
 }
