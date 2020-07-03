@@ -94,45 +94,68 @@ func (p *Plugin) registerCommands() error {
 // ExecuteCommand executes a command that has been previously registered via the RegisterCommand
 // API.
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-	trigger := strings.TrimPrefix(args.Command, "/")
-
-	if strings.HasPrefix(trigger, commandIcebreaker) {
-		if strings.HasPrefix(trigger, commandIcebreakerAdd) {
+	commandMap := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
+		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerAdd(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerApprove) {
+		},
+		commandIcebreakerApprove: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerApprove(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerReject) {
+		},
+		commandIcebreakerReject: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerReject(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerRemove) {
+		},
+		commandIcebreakerRemove: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerRemove(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerClearAllProposals) {
+		},
+		commandIcebreakerClearAllProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerClearAllProposals(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerClearAllApproved) {
+		},
+		commandIcebreakerClearAllApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerClearAllApproved(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerShowProposals) {
+		},
+		commandIcebreakerShowProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerShowProposals(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerShowApproved) {
+		},
+		commandIcebreakerShowApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerShowApproved(args), nil
-		} else if strings.HasPrefix(trigger, commandIcebreakerResetToDefault) {
+		},
+		commandIcebreakerResetToDefault: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerResetToDefault(args), nil
-		} else {
+		},
+		//this needs to be last, as prefix `/icebreaker` is also part of the above commands
+		commandIcebreaker: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreaker(args), nil
-		}
-	} else {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         fmt.Sprintf("Unknown command: " + args.Command),
-		}, nil
+		},
 	}
+
+	trigger := strings.TrimPrefix(args.Command, "/")
+	for key, value := range commandMap {
+		if strings.HasPrefix(trigger, key) {
+			return value(args)
+		}
+	}
+
+	//return an error message when the command has not been detected
+	return &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+		Text:         fmt.Sprintf("Unknown command: " + args.Command),
+	}, nil
 }
 
-func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
-	sourceUser, _ := p.API.GetUser(args.UserId)
+func requireAdminUser(sourceUser *model.User) *model.CommandResponse {
 	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 			Text:         "You need to be admin in order to clear all proposed questions",
 		}
+	}
+	return nil
+}
+
+func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
+	sourceUser, _ := p.API.GetUser(args.UserId)
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	p.FillDefaultQuestions(args.TeamId, args.ChannelId)
@@ -145,11 +168,8 @@ func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs)
 
 func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to clear all proposed questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
@@ -165,11 +185,8 @@ func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandAr
 
 func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to clear all questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
@@ -185,11 +202,8 @@ func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArg
 
 func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to remove questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
@@ -232,11 +246,8 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 
 func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to reject questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
@@ -279,11 +290,8 @@ func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.
 
 func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to approve questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
@@ -324,11 +332,8 @@ func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model
 
 func (p *Plugin) executeCommandIcebreakerShowProposals(args *model.CommandArgs) *model.CommandResponse {
 	sourceUser, _ := p.API.GetUser(args.UserId)
-	if !sourceUser.IsSystemAdmin() { //TODO: Check for Channel owner instead of System Admin
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "You need to be admin in order to show proposed questions",
-		}
+	if response := requireAdminUser(sourceUser); response != nil {
+		return response
 	}
 
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
