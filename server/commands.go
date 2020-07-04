@@ -309,7 +309,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	}
 
 	//get a random user that is not a bot
-	user, err := p.GetRandomUser(args.ChannelId)
+	user, err := p.GetRandomUser(args.ChannelId, args.UserId)
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
