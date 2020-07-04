@@ -27,6 +27,11 @@ func (p *Plugin) GetRandomUser(channelID string, userIdToIgnore string) (*model.
 		if user.Id == userIdToIgnore {
 			continue
 		}
+		status, err := p.API.GetUserStatus(user.Id)
+		if (err != nil) || (status.Status == "offline") || (status.Status == "dnd") {
+			continue
+		}
+
 		targetuser = user
 		hasUserBeenFound = true
 		break

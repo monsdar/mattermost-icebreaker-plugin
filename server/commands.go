@@ -313,7 +313,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	if err != nil {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: Cannot get a user to ask a question for...",
+			Text:         "Error: Cannot get a user to ask a question for. Note: This plugin will not ask questions to offline or DND users.",
 		}
 	}
 
