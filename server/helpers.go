@@ -11,7 +11,7 @@ import (
 
 // GetRandomUser returns a random user that is found in the given channel and that is not a bot
 // This function is limited to 1000 users per channel
-func (p *Plugin) GetRandomUser(channelID string, userIdToIgnore string) (*model.User, *model.AppError) {
+func (p *Plugin) GetRandomUser(channelID string, userIDToIgnore string) (*model.User, *model.AppError) {
 	//get a random user that is not a bot
 	users, _ := p.API.GetUsersInChannel(channelID, "username", 0, 1000)
 	rand.Shuffle(len(users), func(i, j int) {
@@ -24,7 +24,7 @@ func (p *Plugin) GetRandomUser(channelID string, userIdToIgnore string) (*model.
 		if user.IsBot {
 			continue
 		}
-		if user.Id == userIdToIgnore {
+		if user.Id == userIDToIgnore {
 			continue
 		}
 		status, err := p.API.GetUserStatus(user.Id)
