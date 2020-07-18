@@ -13,14 +13,14 @@ import (
 const (
 	commandIcebreaker                  = "icebreaker"
 	commandIcebreakerAdd               = commandIcebreaker + " add"
-	commandIcebreakerApprove           = commandIcebreaker + " approve"
-	commandIcebreakerReject            = commandIcebreaker + " reject"
-	commandIcebreakerRemove            = commandIcebreaker + " remove"
-	commandIcebreakerClearAllProposals = commandIcebreaker + " clearall proposals"
-	commandIcebreakerClearAllApproved  = commandIcebreaker + " clearall approved"
 	commandIcebreakerShowProposals     = commandIcebreaker + " show proposals"
 	commandIcebreakerShowApproved      = commandIcebreaker + " show approved"
-	commandIcebreakerResetToDefault    = commandIcebreaker + " reset questions"
+	commandIcebreakerApprove           = commandIcebreaker + " admin approve"
+	commandIcebreakerReject            = commandIcebreaker + " admin reject"
+	commandIcebreakerRemove            = commandIcebreaker + " admin remove"
+	commandIcebreakerClearAllProposals = commandIcebreaker + " admin clearall proposals"
+	commandIcebreakerClearAllApproved  = commandIcebreaker + " admin clearall approved"
+	commandIcebreakerResetToDefault    = commandIcebreaker + " admin reset questions"
 )
 
 func (p *Plugin) registerCommands() error {
@@ -67,12 +67,12 @@ func (p *Plugin) registerCommands() error {
 		model.Command{
 			Trigger:          commandIcebreakerShowProposals,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Show a list of proposed Icebreaker questions. Channel owners only",
+			AutoCompleteDesc: "Show a list of proposed Icebreaker questions",
 		},
 		model.Command{
 			Trigger:          commandIcebreakerShowApproved,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Show the list of Icebreaker questions. Channel owners only",
+			AutoCompleteDesc: "Show the list of Icebreaker questions",
 		},
 		model.Command{
 			Trigger:          commandIcebreakerResetToDefault,
@@ -109,12 +109,6 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		commandIcebreakerClearAllApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerClearAllApproved(args), nil
 		},
-		commandIcebreakerShowProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerShowProposals(args), nil
-		},
-		commandIcebreakerShowApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerShowApproved(args), nil
-		},
 		commandIcebreakerResetToDefault: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerResetToDefault(args), nil
 		},
@@ -124,10 +118,17 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerAdd(args), nil
 		},
-		//this needs to be last, as prefix `/icebreaker` is also part of the above commands
-		commandIcebreaker: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreaker(args), nil
+		commandIcebreakerShowApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreakerShowApproved(args), nil
 		},
+		commandIcebreakerShowProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreakerShowProposals(args), nil
+		},
+	}
+
+	//this needs to be last, as prefix `/icebreaker` is also part of the above commands
+	triggerCommand := func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+		return p.executeCommandIcebreaker(args), nil
 	}
 
 	trigger := strings.TrimPrefix(args.Command, "/")
@@ -148,6 +149,11 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		if strings.HasPrefix(trigger, key) {
 			return value(args)
 		}
+	}
+
+	//last but not least check for the triggerCommand (it needs to be asked without any text behind it)
+	if trigger == commandIcebreaker {
+		return triggerCommand(args)
 	}
 
 	//return an error message when the command has not been detected at all
@@ -193,65 +199,67 @@ func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArg
 func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.CommandResponse {
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	index, errResponse := getIndex(args.Command, data.ApprovedQuestions[args.TeamId][args.ChannelId])
+	indeces, errResponse := getIndeces(args.Command, data.ApprovedQuestions[args.TeamId][args.ChannelId])
 	if errResponse != nil {
 		return errResponse
 	}
 
-	question := data.ApprovedQuestions[args.TeamId][args.ChannelId][index]
-	//from https://stackoverflow.com/a/37335777/199513
-	data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId][:index], data.ApprovedQuestions[args.TeamId][args.ChannelId][index+1:]...)
-
+	for _, index := range indeces {
+		//from https://stackoverflow.com/a/37335777/199513
+		data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId][:index], data.ApprovedQuestions[args.TeamId][args.ChannelId][index+1:]...)
+	}
 	p.WriteToStorage(&data)
 
 	//TODO: Should we notify the author of the question as well? "Hey <user>! Your question for channel <channel> has been removed: <question>"
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("Question has been removed: %s", question),
+		Text:         "Questions removed",
 	}
 }
 
 func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.CommandResponse {
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
+	indeces, errResponse := getIndeces(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
 	if errResponse != nil {
 		return errResponse
 	}
 
-	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
-	//from https://stackoverflow.com/a/37335777/199513
-	data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
-
+	for _, index := range indeces {
+		//from https://stackoverflow.com/a/37335777/199513
+		data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
+	}
 	p.WriteToStorage(&data)
 
 	//TODO: Should we notify the author of the proposal as well? "Hey <user>! Your proposed question for channel <channel> has been rejected: <question>"
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("Question has been rejected: %s", question),
+		Text:         "Questions rejected",
 	}
 }
 
 func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model.CommandResponse {
 	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
 
-	index, errResponse := getIndex(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
+	indeces, errResponse := getIndeces(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
 	if errResponse != nil {
 		return errResponse
 	}
 
-	question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
-	data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
-	//from https://stackoverflow.com/a/37335777/199513
-	data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
+	for _, index := range indeces {
+		question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
+		data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
+		//from https://stackoverflow.com/a/37335777/199513
+		data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
+	}
 
 	p.WriteToStorage(&data)
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("Question has been approved: %s", question),
+		Text:         "Successfully approved",
 	}
 }
 
