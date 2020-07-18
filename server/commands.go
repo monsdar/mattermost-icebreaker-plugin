@@ -275,7 +275,12 @@ func (p *Plugin) executeCommandIcebreakerShowProposals(args *model.CommandArgs) 
 
 	message := "Proposed questions:\n"
 	for index, question := range data.ProposedQuestions[args.TeamId][args.ChannelId] {
-		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, question.Creator, question.Question)
+		creator := question.Creator
+		user, err := p.API.GetUser(creator)
+		if err != nil {
+			creator = user.GetDisplayName("")
+		}
+		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, creator, question.Question)
 	}
 
 	return &model.CommandResponse{
@@ -296,7 +301,12 @@ func (p *Plugin) executeCommandIcebreakerShowApproved(args *model.CommandArgs) *
 
 	message := "Questions:\n"
 	for index, question := range data.ApprovedQuestions[args.TeamId][args.ChannelId] {
-		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, question.Creator, question.Question)
+		creator := question.Creator
+		user, err := p.API.GetUser(creator)
+		if err != nil {
+			creator = user.GetDisplayName("")
+		}
+		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, creator, question.Question)
 	}
 
 	return &model.CommandResponse{
@@ -389,6 +399,6 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("Thanks %s! Added your proposal: '%s'. Total number of proposals: %d", newQuestion.Creator, newQuestion.Question, len(data.ProposedQuestions[args.TeamId][args.ChannelId])),
+		Text:         fmt.Sprintf("Thanks %s! Added your proposal: '%s'. Total number of proposals: %d", creator.GetDisplayName(""), newQuestion.Question, len(data.ProposedQuestions[args.TeamId][args.ChannelId])),
 	}
 }
