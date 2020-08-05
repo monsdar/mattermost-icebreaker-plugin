@@ -15,7 +15,7 @@ const manifestStr = `
   "id": "com.nilsbrinkmann.icebreaker",
   "name": "Icebreaker Plugin",
   "description": "This plugin creates a bot which asks random questions",
-  "version": "1.3.0",
+  "version": "1.4.1",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {

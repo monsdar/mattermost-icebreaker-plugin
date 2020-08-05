@@ -14,25 +14,27 @@ import (
 func (p *Plugin) GetRandomUser(channelID string, userIDToIgnore string) (*model.User, *model.AppError) {
 	//get a random user that is not a bot
 	users, _ := p.API.GetUsersInChannel(channelID, "username", 0, 1000)
-	rand.Shuffle(len(users), func(i, j int) {
-		users[i], users[j] = users[j], users[i]
-	})
 
 	targetuser := new(model.User)
 	hasUserBeenFound := false
-	for _, user := range users {
-		if user.IsBot {
+	for len(users) > 0 { //as long as there are users left continue to search for a good candidate
+		randomIndex := rand.Intn(len(users))
+		currentUser := users[randomIndex]
+		if currentUser.IsBot {
+			users = append(users[:randomIndex], users[randomIndex+1:]...) //from https://stackoverflow.com/a/37335777/199513
 			continue
 		}
-		if user.Id == userIDToIgnore {
+		if currentUser.Id == userIDToIgnore {
+			users = append(users[:randomIndex], users[randomIndex+1:]...) //from https://stackoverflow.com/a/37335777/199513
 			continue
 		}
-		status, err := p.API.GetUserStatus(user.Id)
+		status, err := p.API.GetUserStatus(currentUser.Id)
 		if (err != nil) || (status.Status == "offline") || (status.Status == "dnd") {
+			users = append(users[:randomIndex], users[randomIndex+1:]...) //from https://stackoverflow.com/a/37335777/199513
 			continue
 		}
 
-		targetuser = user
+		targetuser = currentUser
 		hasUserBeenFound = true
 		break
 	}
