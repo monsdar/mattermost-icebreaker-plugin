@@ -32,8 +32,7 @@ type Question struct {
 
 //IceBreakerData contains all data necessary to be stored for the Icebreaker Plugin
 type IceBreakerData struct {
-	ApprovedQuestions map[string]map[string][]Question `json:"ApprovedQuestions"`
-	ProposedQuestions map[string]map[string][]Question `json:"ProposedQuestions"`
+	Questions []Question `json:"Questions"`
 }
 
 // OnActivate is invoked when the plugin is activated.

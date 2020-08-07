@@ -13,11 +13,8 @@ import (
 )
 
 func TestAskIcebreaker_fail(t *testing.T) {
-	t.Run("No approved questions", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{},
-			}}}
+	t.Run("No questions", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{Questions: []Question{}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -35,16 +32,13 @@ func TestAskIcebreaker_fail(t *testing.T) {
 		}
 
 		result := plugin.executeCommandIcebreaker(args)
-		assert.Equal(t, "Error: There are no approved questions that I can ask. Be the first one to propose a question by using '/icebreaker add <question>'", result.Text)
+		assert.Equal(t, "Error: There are no questions that I can ask. Be the first one to propose a question by using `/icebreaker add <question>`", result.Text)
 	})
 	t.Run("No users in channel", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -67,13 +61,10 @@ func TestAskIcebreaker_fail(t *testing.T) {
 		assert.Equal(t, "Error: Cannot get a user to ask a question for. Note: This plugin will not ask questions to offline or DND users.", result.Text)
 	})
 	t.Run("Only bots", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -108,13 +99,10 @@ func TestAskIcebreaker_fail(t *testing.T) {
 		assert.Equal(t, "Error: Cannot get a user to ask a question for. Note: This plugin will not ask questions to offline or DND users.", result.Text)
 	})
 	t.Run("Only own user", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -143,13 +131,10 @@ func TestAskIcebreaker_fail(t *testing.T) {
 		assert.Equal(t, "Error: Cannot get a user to ask a question for. Note: This plugin will not ask questions to offline or DND users.", result.Text)
 	})
 	t.Run("Only offline and DND", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -184,13 +169,10 @@ func TestAskIcebreaker_fail(t *testing.T) {
 func TestAskIcebreaker_success(t *testing.T) {
 	t.Run("Successful, first user", func(t *testing.T) {
 		rand.Seed(5) //seed guarantees that the loop goes through a few users before picking success_user
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -234,13 +216,10 @@ func TestAskIcebreaker_success(t *testing.T) {
 	})
 	t.Run("Successful, other user", func(t *testing.T) {
 		rand.Seed(4) //seed guarantees that the loop goes through a few users before picking success_user2
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					},
-				}}}}
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -301,13 +280,11 @@ func TestAddIcebreaker(t *testing.T) {
 		assert.NotNil(t, plugin.executeCommandIcebreakerAdd(args))
 	})
 
-	t.Run("Question already proposed", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ProposedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					}}}}}
+	t.Run("Question already added", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "How do you do?",
+			}}}
 		reqBodyBytes := new(bytes.Buffer)
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
@@ -325,34 +302,7 @@ func TestAddIcebreaker(t *testing.T) {
 		}
 
 		result := plugin.executeCommandIcebreakerAdd(args)
-		assert.Equal(t, "Your question has already been proposed", result.Text)
-	})
-
-	t.Run("Question already approved", func(t *testing.T) {
-		icebreakerData := &IceBreakerData{ApprovedQuestions: map[string]map[string][]Question{
-			"TestTeam": map[string][]Question{
-				"TestChannel": []Question{
-					Question{
-						Creator: "TestUser", Question: "How do you do?",
-					}}}}}
-		reqBodyBytes := new(bytes.Buffer)
-		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
-
-		plugin := &Plugin{}
-		api := &plugintest.API{}
-		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser"}, nil)
-		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
-		plugin.SetAPI(api)
-
-		args := &model.CommandArgs{
-			Command:   "/icebreaker add How do you do?",
-			ChannelId: "TestChannel",
-			TeamId:    "TestTeam",
-			UserId:    "TestUser",
-		}
-
-		result := plugin.executeCommandIcebreakerAdd(args)
-		assert.Equal(t, "Your question has already been approved", result.Text)
+		assert.Equal(t, "Error: Your question has already been added", result.Text)
 	})
 
 	t.Run("Valid question", func(t *testing.T) {
@@ -361,22 +311,18 @@ func TestAddIcebreaker(t *testing.T) {
 		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
 
 		dataAfterAddingTheQuestion := &IceBreakerData{
-			ApprovedQuestions: map[string]map[string][]Question{
-				"TestTeam": map[string][]Question{}},
-			ProposedQuestions: map[string]map[string][]Question{
-				"TestTeam": map[string][]Question{
-					"TestChannel": []Question{
-						Question{
-							Creator: "TestUser", Question: "How do you do?",
-						}}}}}
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
 		bytesAfterAddingTheQuestion := new(bytes.Buffer)
 		json.NewEncoder(bytesAfterAddingTheQuestion).Encode(dataAfterAddingTheQuestion)
 
 		plugin := &Plugin{}
 		api := &plugintest.API{}
-		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser"}, nil)
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId"}, nil)
 		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
-		api.On("KVSet", mock.AnythingOfType("string"), bytesAfterAddingTheQuestion.Bytes()).Return(nil)
+		api.On("KVSet", "IceBreakerData", bytesAfterAddingTheQuestion.Bytes()).Return(nil)
 		plugin.SetAPI(api)
 
 		args := &model.CommandArgs{
@@ -387,6 +333,6 @@ func TestAddIcebreaker(t *testing.T) {
 		}
 
 		result := plugin.executeCommandIcebreakerAdd(args)
-		assert.Equal(t, "Thanks TestUser! Added your proposal: 'How do you do?'. Total number of proposals: 1", result.Text)
+		assert.Equal(t, "Thanks TestUser! Added your question: 'How do you do?'. Total number of questions: 1", result.Text)
 	})
 }

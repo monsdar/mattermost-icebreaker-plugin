@@ -11,16 +11,12 @@ import (
 )
 
 const (
-	commandIcebreaker                  = "icebreaker"
-	commandIcebreakerAdd               = commandIcebreaker + " add"
-	commandIcebreakerShowProposals     = commandIcebreaker + " show proposals"
-	commandIcebreakerShowApproved      = commandIcebreaker + " show approved"
-	commandIcebreakerApprove           = commandIcebreaker + " admin approve"
-	commandIcebreakerReject            = commandIcebreaker + " admin reject"
-	commandIcebreakerRemove            = commandIcebreaker + " admin remove"
-	commandIcebreakerClearAllProposals = commandIcebreaker + " admin clearall proposals"
-	commandIcebreakerClearAllApproved  = commandIcebreaker + " admin clearall approved"
-	commandIcebreakerResetToDefault    = commandIcebreaker + " admin reset questions"
+	commandIcebreaker               = "icebreaker"
+	commandIcebreakerAdd            = commandIcebreaker + " add"
+	commandIcebreakerList           = commandIcebreaker + " list"
+	commandIcebreakerRemove         = commandIcebreaker + " admin remove"
+	commandIcebreakerClearAll       = commandIcebreaker + " admin clearall"
+	commandIcebreakerResetToDefault = commandIcebreaker + " admin reset questions"
 )
 
 func (p *Plugin) registerCommands() error {
@@ -37,47 +33,25 @@ func (p *Plugin) registerCommands() error {
 			AutoCompleteDesc: "Propose as new icebreaker question",
 		},
 		model.Command{
-			Trigger:          commandIcebreakerApprove,
+			Trigger:          commandIcebreakerList,
 			AutoComplete:     true,
-			AutoCompleteHint: "<id>",
-			AutoCompleteDesc: "Approve a proposed IceBreaker question. Channel owners only",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerReject,
-			AutoComplete:     true,
-			AutoCompleteHint: "<id>",
-			AutoCompleteDesc: "Reject a proposed IceBreaker question. Channel owners only",
+			AutoCompleteDesc: "Show a list questions",
 		},
 		model.Command{
 			Trigger:          commandIcebreakerRemove,
 			AutoComplete:     true,
 			AutoCompleteHint: "<id>",
-			AutoCompleteDesc: "Remove an already approved IceBreaker question. Channel owners only",
+			AutoCompleteDesc: "Remove a question. Admin only",
 		},
 		model.Command{
-			Trigger:          commandIcebreakerClearAllProposals,
+			Trigger:          commandIcebreakerClearAll,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Remove ALL proposed IceBreaker question. Channel owners only",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerClearAllApproved,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Remove ALL approved IceBreaker question. Channel owners only",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerShowProposals,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Show a list of proposed Icebreaker questions",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerShowApproved,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Show the list of Icebreaker questions",
+			AutoCompleteDesc: "Remove ALL questions. Admin only",
 		},
 		model.Command{
 			Trigger:          commandIcebreakerResetToDefault,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Resets the Icebreaker questions to the default ones from this plugin. Channel owners only",
+			AutoCompleteDesc: "Resets the questions to the default ones from this plugin. Admin only",
 		},
 	}
 
@@ -94,20 +68,11 @@ func (p *Plugin) registerCommands() error {
 // API.
 func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 	adminCommands := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
-		commandIcebreakerApprove: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerApprove(args), nil
-		},
-		commandIcebreakerReject: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerReject(args), nil
-		},
 		commandIcebreakerRemove: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerRemove(args), nil
 		},
-		commandIcebreakerClearAllProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerClearAllProposals(args), nil
-		},
-		commandIcebreakerClearAllApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerClearAllApproved(args), nil
+		commandIcebreakerClearAll: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreakerClearAll(args), nil
 		},
 		commandIcebreakerResetToDefault: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerResetToDefault(args), nil
@@ -118,11 +83,8 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerAdd(args), nil
 		},
-		commandIcebreakerShowApproved: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerShowApproved(args), nil
-		},
-		commandIcebreakerShowProposals: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
-			return p.executeCommandIcebreakerShowProposals(args), nil
+		commandIcebreakerList: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreakerList(args), nil
 		},
 	}
 
@@ -165,7 +127,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 }
 
 func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs) *model.CommandResponse {
-	p.FillDefaultQuestions(args.TeamId, args.ChannelId)
+	p.FillDefaultQuestions()
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
@@ -173,10 +135,10 @@ func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs)
 	}
 }
 
-func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
-	lenBefore := len(data.ProposedQuestions[args.TeamId][args.ChannelId])
-	data.ProposedQuestions[args.TeamId][args.ChannelId] = nil
+func (p *Plugin) executeCommandIcebreakerClearAll(args *model.CommandArgs) *model.CommandResponse {
+	data := p.ReadFromStorage()
+	lenBefore := len(data.Questions)
+	data.Questions = []Question{}
 	p.WriteToStorage(&data)
 
 	return &model.CommandResponse{
@@ -186,9 +148,9 @@ func (p *Plugin) executeCommandIcebreakerClearAllProposals(args *model.CommandAr
 }
 
 func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
-	lenBefore := len(data.ApprovedQuestions[args.TeamId][args.ChannelId])
-	data.ApprovedQuestions[args.TeamId][args.ChannelId] = nil
+	data := p.ReadFromStorage()
+	lenBefore := len(data.Questions)
+	data.Questions = []Question{}
 	p.WriteToStorage(&data)
 
 	return &model.CommandResponse{
@@ -198,20 +160,18 @@ func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArg
 }
 
 func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
+	data := p.ReadFromStorage()
 
-	indeces, errResponse := getIndeces(args.Command, data.ApprovedQuestions[args.TeamId][args.ChannelId])
+	indeces, errResponse := getIndeces(args.Command, data.Questions)
 	if errResponse != nil {
 		return errResponse
 	}
 
 	for _, index := range indeces {
 		//from https://stackoverflow.com/a/37335777/199513
-		data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId][:index], data.ApprovedQuestions[args.TeamId][args.ChannelId][index+1:]...)
+		data.Questions = append(data.Questions[:index], data.Questions[index+1:]...)
 	}
 	p.WriteToStorage(&data)
-
-	//TODO: Should we notify the author of the question as well? "Hey <user>! Your question for channel <channel> has been removed: <question>"
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
@@ -219,89 +179,18 @@ func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.
 	}
 }
 
-func (p *Plugin) executeCommandIcebreakerReject(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
+func (p *Plugin) executeCommandIcebreakerList(args *model.CommandArgs) *model.CommandResponse {
+	data := p.ReadFromStorage()
 
-	indeces, errResponse := getIndeces(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
-	if errResponse != nil {
-		return errResponse
-	}
-
-	for _, index := range indeces {
-		//from https://stackoverflow.com/a/37335777/199513
-		data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
-	}
-	p.WriteToStorage(&data)
-
-	//TODO: Should we notify the author of the proposal as well? "Hey <user>! Your proposed question for channel <channel> has been rejected: <question>"
-
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         "Questions rejected",
-	}
-}
-
-func (p *Plugin) executeCommandIcebreakerApprove(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
-
-	indeces, errResponse := getIndeces(args.Command, data.ProposedQuestions[args.TeamId][args.ChannelId])
-	if errResponse != nil {
-		return errResponse
-	}
-
-	for _, index := range indeces {
-		question := data.ProposedQuestions[args.TeamId][args.ChannelId][index]
-		data.ApprovedQuestions[args.TeamId][args.ChannelId] = append(data.ApprovedQuestions[args.TeamId][args.ChannelId], question)
-		//from https://stackoverflow.com/a/37335777/199513
-		data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId][:index], data.ProposedQuestions[args.TeamId][args.ChannelId][index+1:]...)
-	}
-
-	p.WriteToStorage(&data)
-
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         "Successfully approved",
-	}
-}
-
-func (p *Plugin) executeCommandIcebreakerShowProposals(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
-
-	if len(data.ProposedQuestions[args.TeamId][args.ChannelId]) == 0 {
+	if len(data.Questions) == 0 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "There are no proposed questions for this channel...",
-		}
-	}
-
-	message := "Proposed questions:\n"
-	for index, question := range data.ProposedQuestions[args.TeamId][args.ChannelId] {
-		creator := question.Creator
-		user, err := p.API.GetUser(creator)
-		if err != nil {
-			creator = user.GetDisplayName("")
-		}
-		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, creator, question.Question)
-	}
-
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         message,
-	}
-}
-
-func (p *Plugin) executeCommandIcebreakerShowApproved(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
-
-	if len(data.ApprovedQuestions[args.TeamId][args.ChannelId]) == 0 {
-		return &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "There are no questions for this channel...",
+			Text:         "There are no questions...",
 		}
 	}
 
 	message := "Questions:\n"
-	for index, question := range data.ApprovedQuestions[args.TeamId][args.ChannelId] {
+	for index, question := range data.Questions {
 		creator := question.Creator
 		user, err := p.API.GetUser(creator)
 		if err != nil {
@@ -317,13 +206,13 @@ func (p *Plugin) executeCommandIcebreakerShowApproved(args *model.CommandArgs) *
 }
 
 func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
+	data := p.ReadFromStorage()
 
-	//check if there are any approved questions yet
-	if len(data.ApprovedQuestions[args.TeamId][args.ChannelId]) == 0 {
+	//check if there are any questions yet
+	if len(data.Questions) == 0 {
 		return &model.CommandResponse{
 			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: There are no approved questions that I can ask. Be the first one to propose a question by using '/icebreaker add <question>'",
+			Text:         "Error: There are no questions that I can ask. Be the first one to propose a question by using `/icebreaker add <question>`",
 		}
 	}
 
@@ -337,7 +226,7 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	}
 
 	//build the question and ask it
-	question := data.ApprovedQuestions[args.TeamId][args.ChannelId][rand.Intn(len(data.ApprovedQuestions[args.TeamId][args.ChannelId]))]
+	question := data.Questions[rand.Intn(len(data.Questions))]
 	message := fmt.Sprintf("Hey @%s! %s", user.GetDisplayName(""), question.Question)
 	post := &model.Post{
 		ChannelId: args.ChannelId,
@@ -374,32 +263,23 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 	newQuestion.Creator = creator.Id
 	newQuestion.Question = givenQuestion
 
-	data := p.ReadFromStorage(args.TeamId, args.ChannelId)
+	data := p.ReadFromStorage()
 
-	//Check if the question already is proposed or even approved
-	for _, question := range data.ProposedQuestions[args.TeamId][args.ChannelId] {
+	//Check if the question is already created
+	for _, question := range data.Questions {
 		if question.Question == newQuestion.Question {
 			return &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         "Error: Your question has already been proposed",
+				Text:         "Error: Your question has already been added",
 			}
 		}
 	}
-	for _, question := range data.ApprovedQuestions[args.TeamId][args.ChannelId] {
-		if question.Question == newQuestion.Question {
-			return &model.CommandResponse{
-				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-				Text:         "Error: Your question has already been approved",
-			}
-		}
-	}
-
-	data.ProposedQuestions[args.TeamId][args.ChannelId] = append(data.ProposedQuestions[args.TeamId][args.ChannelId], newQuestion)
+	data.Questions = append(data.Questions, newQuestion)
 
 	p.WriteToStorage(&data)
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("Thanks %s! Added your proposal: '%s'. Total number of proposals: %d", creator.GetDisplayName(""), newQuestion.Question, len(data.ProposedQuestions[args.TeamId][args.ChannelId])),
+		Text:         fmt.Sprintf("Thanks %s! Added your question: '%s'. Total number of questions: %d", creator.GetDisplayName(""), newQuestion.Question, len(data.Questions)),
 	}
 }

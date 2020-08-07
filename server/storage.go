@@ -7,7 +7,8 @@ import (
 
 const (
 	//KVKEY is the key used for storing the data in the KVStorage
-	KVKEY = "IceBreakerData"
+	//KVKEY = "IceBreakerData" //this is the old key which stored the questions in a way more complex way and allowed for proposing and accepting questions by users
+	KVKEY = "IceBreakerData_v2"
 )
 
 func getDefaultQuestions() []Question {
@@ -73,15 +74,14 @@ func getDefaultQuestions() []Question {
 }
 
 // FillDefaultQuestions fills in the default questions of this plugin
-func (p *Plugin) FillDefaultQuestions(teamID string, channelID string) {
-	data := p.ReadFromStorage(teamID, channelID)
-	data.ProposedQuestions[teamID][channelID] = []Question{}
-	data.ApprovedQuestions[teamID][channelID] = getDefaultQuestions()
+func (p *Plugin) FillDefaultQuestions() {
+	data := p.ReadFromStorage()
+	data.Questions = getDefaultQuestions()
 	p.WriteToStorage(&data)
 }
 
 // ReadFromStorage reads IceBreakerData from the KVStore. Makes sure that data is inited for the given team and channel
-func (p *Plugin) ReadFromStorage(teamID string, channelID string) IceBreakerData {
+func (p *Plugin) ReadFromStorage() IceBreakerData {
 	data := IceBreakerData{}
 	kvData, err := p.API.KVGet(KVKEY)
 	if err != nil {
@@ -89,21 +89,6 @@ func (p *Plugin) ReadFromStorage(teamID string, channelID string) IceBreakerData
 	}
 	if kvData != nil {
 		json.Unmarshal(kvData, &data)
-	}
-
-	if data.ProposedQuestions == nil {
-		data.ProposedQuestions = make(map[string]map[string][]Question)
-	}
-	if _, ok := data.ProposedQuestions[teamID]; !ok {
-		data.ProposedQuestions[teamID] = make(map[string][]Question)
-		data.ProposedQuestions[teamID][channelID] = []Question{}
-	}
-	if data.ApprovedQuestions == nil {
-		data.ApprovedQuestions = make(map[string]map[string][]Question)
-	}
-	if _, ok := data.ApprovedQuestions[teamID]; !ok {
-		data.ApprovedQuestions[teamID] = make(map[string][]Question)
-		data.ApprovedQuestions[teamID][channelID] = []Question{}
 	}
 
 	return data
