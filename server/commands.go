@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"strings"
 
 	"github.com/mattermost/mattermost-server/v5/model"
@@ -226,7 +225,14 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 	}
 
 	//build the question and ask it
-	question := data.Questions[rand.Intn(len(data.Questions))]
+	question, err := p.GetRandomQuestion()
+	if err != nil {
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Error: There are no questions that I can ask. Be the first one to propose a question by using `/icebreaker add <question>`",
+		}
+	}
+
 	message := fmt.Sprintf("Hey @%s! %s", user.GetDisplayName(""), question.Question)
 	post := &model.Post{
 		ChannelId: args.ChannelId,
@@ -234,6 +240,19 @@ func (p *Plugin) executeCommandIcebreaker(args *model.CommandArgs) *model.Comman
 		UserId:    p.botID,
 		Message:   message,
 	}
+
+	//store the user and question so we avoid asking the same users and same questions over and over
+	data.LastUsers = append(data.LastUsers, user.Id)
+	if len(data.LastUsers) > LenHistory {
+		index := 0 //remove the oldest element
+		data.LastUsers = append(data.LastUsers[:index], data.LastUsers[index+1:]...)
+	}
+	data.LastQuestions = append(data.LastQuestions, *question)
+	if len(data.LastQuestions) > LenHistory {
+		index := 0 //remove the oldest element
+		data.LastQuestions = append(data.LastQuestions[:index], data.LastQuestions[index+1:]...)
+	}
+	p.WriteToStorage(&data)
 
 	if _, err = p.API.CreatePost(post); err != nil {
 		const errorMessage = "Error: Failed to create post"

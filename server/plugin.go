@@ -32,8 +32,13 @@ type Question struct {
 
 //IceBreakerData contains all data necessary to be stored for the Icebreaker Plugin
 type IceBreakerData struct {
-	Questions []Question `json:"Questions"`
+	Questions     []Question `json:"Questions"`
+	LastUsers     []string   `json:"LastUsers"`
+	LastQuestions []Question `json:"LastQuestions"`
 }
+
+//LenHistory sets how many LastUsers/LastQuestions are stored to avoid asking the same users or same questions over and over
+const LenHistory int = 50
 
 // OnActivate is invoked when the plugin is activated.
 //

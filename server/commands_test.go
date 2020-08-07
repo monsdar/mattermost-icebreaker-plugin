@@ -168,7 +168,7 @@ func TestAskIcebreaker_fail(t *testing.T) {
 
 func TestAskIcebreaker_success(t *testing.T) {
 	t.Run("Successful, first user", func(t *testing.T) {
-		rand.Seed(5) //seed guarantees that the loop goes through a few users before picking success_user
+		rand.Seed(1338)
 		icebreakerData := &IceBreakerData{Questions: []Question{
 			Question{
 				Creator: "TestUser", Question: "How do you do?",
@@ -189,6 +189,7 @@ func TestAskIcebreaker_success(t *testing.T) {
 		api := &plugintest.API{}
 		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser"}, nil)
 		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8")).Return(nil)
 		api.On("GetUsersInChannel", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("int")).
 			Return(users, nil)
 		api.On("GetUserStatus", "User1").Return(&model.Status{Status: "offline"}, nil)
@@ -215,7 +216,7 @@ func TestAskIcebreaker_success(t *testing.T) {
 		plugin.ExecuteCommand(nil, args)
 	})
 	t.Run("Successful, other user", func(t *testing.T) {
-		rand.Seed(4) //seed guarantees that the loop goes through a few users before picking success_user2
+		rand.Seed(1337)
 		icebreakerData := &IceBreakerData{Questions: []Question{
 			Question{
 				Creator: "TestUser", Question: "How do you do?",
@@ -236,6 +237,7 @@ func TestAskIcebreaker_success(t *testing.T) {
 		api := &plugintest.API{}
 		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser"}, nil)
 		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8")).Return(nil)
 		api.On("GetUsersInChannel", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("int")).
 			Return(users, nil)
 		api.On("GetUserStatus", "User1").Return(&model.Status{Status: "offline"}, nil)
@@ -260,6 +262,74 @@ func TestAskIcebreaker_success(t *testing.T) {
 		}
 
 		plugin.executeCommandIcebreaker(args)
+	})
+	t.Run("Successful, history", func(t *testing.T) {
+		rand.Seed(1338)
+		icebreakerData := &IceBreakerData{Questions: []Question{
+			Question{
+				Creator: "TestUser", Question: "First question",
+			},
+			Question{
+				Creator: "TestUser", Question: "Second question",
+			},
+			Question{
+				Creator: "TestUser", Question: "Third question",
+			}},
+			LastUsers: []string{
+				"SuccessUser1",
+				"SuccessUser2",
+			},
+			LastQuestions: []Question{
+				Question{
+					Creator: "TestUser", Question: "First question",
+				},
+				Question{
+					Creator: "TestUser", Question: "Third question",
+				},
+			},
+		}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		users := []*model.User{
+			&model.User{IsBot: true},
+			&model.User{Id: "TestUser"},
+			&model.User{Id: "User1"},
+			&model.User{Id: "User2"},
+			&model.User{Id: "SuccessUser1", Username: "success_user1"},
+			&model.User{Id: "SuccessUser2", Username: "success_user2"},
+			&model.User{Id: "SuccessUser3", Username: "success_user3"},
+		}
+
+		args := &model.CommandArgs{
+			Command:   "/icebreaker ",
+			ChannelId: "TestChannel",
+			TeamId:    "TestTeam",
+			RootId:    "TestRoot",
+			UserId:    "TestUser",
+		}
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser"}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", mock.AnythingOfType("string"), mock.AnythingOfType("[]uint8")).Return(nil)
+		api.On("GetUsersInChannel", mock.AnythingOfType("string"), mock.AnythingOfType("string"), mock.AnythingOfType("int"), mock.AnythingOfType("int")).
+			Return(users, nil)
+		api.On("GetUserStatus", "User1").Return(&model.Status{Status: "offline"}, nil)
+		api.On("GetUserStatus", "User2").Return(&model.Status{Status: "dnd"}, nil)
+		api.On("GetUserStatus", "SuccessUser1").Return(&model.Status{Status: "online"}, nil)
+		api.On("GetUserStatus", "SuccessUser2").Return(&model.Status{Status: "online"}, nil)
+		api.On("GetUserStatus", "SuccessUser3").Return(&model.Status{Status: "online"}, nil)
+		api.On("CreatePost", &model.Post{
+			ChannelId: "TestChannel",
+			RootId:    "TestRoot",
+			UserId:    "",
+			Message:   "Hey @success_user3! Second question",
+		}).Return(nil, nil)
+		plugin.SetAPI(api)
+
+		plugin.ExecuteCommand(nil, args)
 	})
 }
 
@@ -322,7 +392,7 @@ func TestAddIcebreaker(t *testing.T) {
 		api := &plugintest.API{}
 		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId"}, nil)
 		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
-		api.On("KVSet", "IceBreakerData", bytesAfterAddingTheQuestion.Bytes()).Return(nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfterAddingTheQuestion.Bytes()).Return(nil)
 		plugin.SetAPI(api)
 
 		args := &model.CommandArgs{
