@@ -223,14 +223,14 @@ func TestAskIcebreaker_success(t *testing.T) {
 		plugin.SetAPI(api)
 
 		args := &model.CommandArgs{
-			Command:   "/icebreaker",
+			Command:   "/icebreaker ",
 			ChannelId: "TestChannel",
 			TeamId:    "TestTeam",
 			RootId:    "TestRoot",
 			UserId:    "TestUser",
 		}
 
-		plugin.executeCommandIcebreaker(args)
+		plugin.ExecuteCommand(nil, args)
 	})
 	t.Run("Successful, other user", func(t *testing.T) {
 		rand.Seed(4) //seed guarantees that the loop goes through a few users before picking success_user2

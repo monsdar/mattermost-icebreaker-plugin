@@ -132,6 +132,7 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	trigger := strings.TrimPrefix(args.Command, "/")
+	trigger = strings.TrimSuffix(trigger, " ")
 
 	//first check for admin commands, make sure the user has the right permission
 	for key, value := range adminCommands {
