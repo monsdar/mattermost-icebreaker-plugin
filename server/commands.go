@@ -192,7 +192,7 @@ func (p *Plugin) executeCommandIcebreakerList(args *model.CommandArgs) *model.Co
 	for index, question := range data.Questions {
 		creator := question.Creator
 		user, err := p.API.GetUser(creator)
-		if err != nil {
+		if err == nil {
 			creator = user.GetDisplayName("")
 		}
 		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, creator, question.Question)
