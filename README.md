@@ -9,12 +9,7 @@ John:           VSCode! But with Vim bindings...
 
 ```
 Mike:           /icebreaker add What's your favorite sports?
-IceBreaker Bot: Thanks John! Added your proposal: 'What's your favorite sports?'. Total number of proposals: 1
-Admin:          /icebreaker show proposals
-IceBreaker Bot: Proposed questions:
-                1. John: What's your favorite sports?
-Admin:          /icebreaker approve 1
-IceBreaker Bot: Question has been approved: What's your favorite sports?
+IceBreaker Bot: Thanks Mike! Added your question: 'What's your favorite sports?'. Total number of questions: 1
 Mike:           /icebreaker
 IceBreaker Bot: Hey John! What's your favorite sports?
 John:           I love playing basketball! Anyone else here? We can meet up tomorrow and play some 3on3...
@@ -31,8 +26,8 @@ In COVID times it's hard to get to know your colleagues by casually chatting by 
 
 ## Features
 * Everyone can trigger a new Icebreaker question using `/icebreaker`
-* Let users propose new questions, admins need to approve them before they can get asked: `/icebreaker add <question>`, `/icebreaker show porposals` and `/icebreaker approve <question-index>`
-* Questions are stored per channel, so each channel can have their own set of questions
+* Everyone can add new questions: `/icebreaker add <question>`
+* Global list of questions, bot can be triggered in any channel and it asks a random online user
 * Fill in a bunch of default questions using `/icebreaker reset questions`
 
 ## Contribute
