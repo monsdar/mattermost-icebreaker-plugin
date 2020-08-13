@@ -27,11 +27,13 @@ In COVID times it's hard to get to know your colleagues by casually chatting by 
 ## Features
 * Everyone can trigger a new Icebreaker question using `/icebreaker`
 * Everyone can add new questions: `/icebreaker add <question>`
-* Global list of questions, bot can be triggered in any channel and it asks a random online user
+* Global list of questions, bot can be triggered in any channel and it asks a random online user from that channel
 * Fill in a bunch of default questions using `/icebreaker reset questions`
 
 ## Contribute
 This plugin is based on the [mattermost-plugin-starter-template](https://github.com/mattermost/mattermost-plugin-starter-template). See there on how to set everything up and test the plugin.
+
+Feel free to post any issues and features to the [issue tracker](https://github.com/monsdar/mattermost-icebreaker-plugin/issues).
 
 ## Attributions
 The icecube logo is licensed under Creative Commons: `ice cube by 23 icons from the Noun Project`
