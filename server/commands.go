@@ -146,35 +146,21 @@ func (p *Plugin) executeCommandIcebreakerClearAll(args *model.CommandArgs) *mode
 	}
 }
 
-func (p *Plugin) executeCommandIcebreakerClearAllApproved(args *model.CommandArgs) *model.CommandResponse {
-	data := p.ReadFromStorage()
-	lenBefore := len(data.Questions)
-	data.Questions = []Question{}
-	p.WriteToStorage(&data)
-
-	return &model.CommandResponse{
-		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("All %d questions have been removed. Beware the pitchforks!", lenBefore),
-	}
-}
-
 func (p *Plugin) executeCommandIcebreakerRemove(args *model.CommandArgs) *model.CommandResponse {
 	data := p.ReadFromStorage()
 
-	indeces, errResponse := getIndeces(args.Command, data.Questions)
+	index, errResponse := getIndex(args.Command, data.Questions)
 	if errResponse != nil {
 		return errResponse
 	}
 
-	for _, index := range indeces {
-		//from https://stackoverflow.com/a/37335777/199513
-		data.Questions = append(data.Questions[:index], data.Questions[index+1:]...)
-	}
+	//from https://stackoverflow.com/a/37335777/199513
+	data.Questions = append(data.Questions[:index], data.Questions[index+1:]...)
 	p.WriteToStorage(&data)
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         "Questions removed",
+		Text:         "Question removed",
 	}
 }
 

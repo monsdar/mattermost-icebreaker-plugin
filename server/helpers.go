@@ -120,30 +120,26 @@ func requireAdminUser(sourceUser *model.User) *model.CommandResponse {
 	return nil
 }
 
-func getIndeces(command string, givenArray []Question) ([]int, *model.CommandResponse) {
+func getIndex(command string, givenArray []Question) (int, *model.CommandResponse) {
 	commandFields := strings.Fields(command)
-	indeces := []int{}
 
 	for _, field := range commandFields {
 		index, err := strconv.Atoi(field)
 		if err != nil {
-			//do nothing... The word we got is not a valid index, but perhaps the next fits...
+			//the word we got is not a valid index, but perhaps the next fits...
+			continue
 		}
-		if len(givenArray) <= index {
-			return []int{}, &model.CommandResponse{
+		if (len(givenArray) <= index) || (index < 0) {
+			return -1, &model.CommandResponse{
 				ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
 				Text:         fmt.Sprintf("Error: Your given index of %d is not valid", index),
 			}
 		}
-		indeces = append(indeces, index)
+		return index, nil
 	}
 
-	if len(indeces) == 0 {
-		return []int{}, &model.CommandResponse{
-			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-			Text:         "Error: Please enter a valid index",
-		}
+	return -1, &model.CommandResponse{
+		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+		Text:         "Error: Please enter a valid index",
 	}
-
-	return indeces, nil
 }

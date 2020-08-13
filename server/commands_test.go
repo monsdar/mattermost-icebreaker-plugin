@@ -406,3 +406,246 @@ func TestAddIcebreaker(t *testing.T) {
 		assert.Equal(t, "Thanks TestUser! Added your question: 'How do you do?'. Total number of questions: 1", result.Text)
 	})
 }
+
+func TestRemoveIcebreaker(t *testing.T) {
+	t.Run("No index given", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Error: Please enter a valid index", result.Text)
+	})
+	t.Run("Negative index", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove -1",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Error: Your given index of -1 is not valid", result.Text)
+	})
+	t.Run("Index out of bounds", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 1",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Error: Your given index of 1 is not valid", result.Text)
+	})
+	t.Run("Success", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 0",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Question removed", result.Text)
+	})
+	t.Run("Success, multiple questions, remove middle", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "Index 0",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 1",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 2",
+				},
+			}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "Index 0",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 2",
+				},
+			}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 1",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Question removed", result.Text)
+	})
+	t.Run("Success, multiple questions, remove end", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "Index 0",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 1",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 2",
+				},
+			}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "Index 0",
+				},
+				Question{
+					Creator: "TestUserId", Question: "Index 1",
+				},
+			}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 2",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Question removed", result.Text)
+	})
+	t.Run("Success, multi index but only first is used", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 0 5",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Question removed", result.Text)
+	})
+	t.Run("Multi index and first is out of bounds", func(t *testing.T) {
+		icebreakerData := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		reqBodyBytes := new(bytes.Buffer)
+		json.NewEncoder(reqBodyBytes).Encode(icebreakerData)
+
+		dataAfter := &IceBreakerData{
+			Questions: []Question{
+				Question{
+					Creator: "TestUserId", Question: "How do you do?",
+				}}}
+		bytesAfter := new(bytes.Buffer)
+		json.NewEncoder(bytesAfter).Encode(dataAfter)
+
+		plugin := &Plugin{}
+		api := &plugintest.API{}
+		api.On("GetUser", mock.AnythingOfType("string")).Return(&model.User{Username: "TestUser", Id: "TestUserId", Roles: model.SYSTEM_ADMIN_ROLE_ID}, nil)
+		api.On("KVGet", mock.AnythingOfType("string")).Return(reqBodyBytes.Bytes(), nil)
+		api.On("KVSet", "IceBreakerData_v2", bytesAfter.Bytes()).Return(nil)
+		plugin.SetAPI(api)
+
+		args := &model.CommandArgs{
+			Command: "/icebreaker admin remove 5 0",
+		}
+		result, _ := plugin.ExecuteCommand(nil, args)
+		assert.Equal(t, "Error: Your given index of 5 is not valid", result.Text)
+	})
+}
