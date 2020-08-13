@@ -15,7 +15,9 @@ const manifestStr = `
   "id": "com.nilsbrinkmann.icebreaker",
   "name": "Icebreaker Plugin",
   "description": "This plugin creates a bot which asks random questions",
-  "version": "2.1.2",
+  "homepage_url": "https://github.com/monsdar/mattermost-icebreaker-plugin",
+  "support_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/issues",
+  "version": "2.1.3",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
