@@ -5,6 +5,7 @@
     "version": "2.1.3",
     "support_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/issues",
     "homepage_url": "https://github.com/monsdar/mattermost-icebreaker-plugin",
+    "release_notes_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/releases",
     
     "min_server_version": "5.12.0",
     "server": {
