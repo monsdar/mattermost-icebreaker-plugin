@@ -11,46 +11,53 @@ import (
 
 const (
 	commandIcebreaker               = "icebreaker"
-	commandIcebreakerAdd            = commandIcebreaker + " add"
-	commandIcebreakerList           = commandIcebreaker + " list"
-	commandIcebreakerRemove         = commandIcebreaker + " admin remove"
-	commandIcebreakerClearAll       = commandIcebreaker + " admin clearall"
-	commandIcebreakerResetToDefault = commandIcebreaker + " admin reset questions"
+	subcommandAsk                   = "ask"
+	subcommandAdd                   = "add"
+	subcommandList                  = "list"
+	subcommandRemove                = "admin remove"
+	subcommandClearAll              = "admin clearall"
+	subcommandResetToDefault        = "admin reset qestions"
+	commandIcebreakerAsk            = commandIcebreaker + " " + subcommandAsk
+	commandIcebreakerAdd            = commandIcebreaker + " " + subcommandAdd
+	commandIcebreakerList           = commandIcebreaker + " " + subcommandList
+	commandIcebreakerRemove         = commandIcebreaker + " " + subcommandRemove
+	commandIcebreakerClearAll       = commandIcebreaker + " " + subcommandClearAll
+	commandIcebreakerResetToDefault = commandIcebreaker + " " + subcommandResetToDefault
 )
+
+func getAutocompleteData() *model.AutocompleteData {
+	icebreakerCommand := model.NewAutocompleteData(commandIcebreaker, "[command]", "Ask an icebreaker, available subcommands: [ask], [add], [list], [admin remove], [admin clearall], [admin reset questions]")
+
+	ask := model.NewAutocompleteData("ask", "", "Ask a new icebreaker")
+	icebreakerCommand.AddCommand(ask)
+
+	add := model.NewAutocompleteData(subcommandAdd, "[question]", "Add as new icebreaker question")
+	add.AddTextArgument("Question: Question you'd like to add", "[question]", "")
+	icebreakerCommand.AddCommand(add)
+
+	list := model.NewAutocompleteData(subcommandList, "", "Show available questions")
+	icebreakerCommand.AddCommand(list)
+
+	remove := model.NewAutocompleteData(subcommandRemove, "[id]", "Remove a question. Admin only")
+	remove.AddTextArgument("Id: Index of the question, as per `/icebreaker list`", "[id]", "")
+	icebreakerCommand.AddCommand(remove)
+
+	clearall := model.NewAutocompleteData(subcommandClearAll, "", "Remove ALL questions. Admin only")
+	icebreakerCommand.AddCommand(clearall)
+
+	reset := model.NewAutocompleteData(subcommandResetToDefault, "", "Resets the questions to the default ones from this plugin. Admin only")
+	icebreakerCommand.AddCommand(reset)
+
+	return icebreakerCommand
+}
 
 func (p *Plugin) registerCommands() error {
 	commands := [...]model.Command{
 		model.Command{
 			Trigger:          commandIcebreaker,
 			AutoComplete:     true,
-			AutoCompleteDesc: "Ask an icebreaker",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerAdd,
-			AutoComplete:     true,
-			AutoCompleteHint: "<question>",
-			AutoCompleteDesc: "Propose as new icebreaker question",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerList,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Show a list questions",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerRemove,
-			AutoComplete:     true,
-			AutoCompleteHint: "<id>",
-			AutoCompleteDesc: "Remove a question. Admin only",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerClearAll,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Remove ALL questions. Admin only",
-		},
-		model.Command{
-			Trigger:          commandIcebreakerResetToDefault,
-			AutoComplete:     true,
-			AutoCompleteDesc: "Resets the questions to the default ones from this plugin. Admin only",
+			AutoCompleteDesc: "Ask an icebreaker, available subcommands: [add], [list], [admin remove], [admin clearall], [admin reset questions]",
+			AutocompleteData: getAutocompleteData(),
 		},
 	}
 
@@ -79,6 +86,9 @@ func (p *Plugin) ExecuteCommand(c *plugin.Context, args *model.CommandArgs) (*mo
 	}
 
 	userCommands := map[string]func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError){
+		commandIcebreakerAsk: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
+			return p.executeCommandIcebreaker(args), nil
+		},
 		commandIcebreakerAdd: func(args *model.CommandArgs) (*model.CommandResponse, *model.AppError) {
 			return p.executeCommandIcebreakerAdd(args), nil
 		},
