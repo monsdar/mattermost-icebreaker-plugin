@@ -191,7 +191,7 @@ func (p *Plugin) executeCommandIcebreakerList(args *model.CommandArgs) *model.Co
 		if err == nil {
 			creator = user.GetDisplayName("")
 		}
-		message = message + fmt.Sprintf("%d.\t%s:\t%s\n", index, creator, question.Question)
+		message = message + fmt.Sprintf("%d.\t@%s:\t%s\n", index, creator, question.Question)
 	}
 
 	return &model.CommandResponse{
@@ -273,12 +273,28 @@ func (p *Plugin) executeCommandIcebreakerAdd(args *model.CommandArgs) *model.Com
 		}
 	}
 
+	//deny questions that are too long
+	if len(givenQuestion) > 200 {
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Your question has not been added: Question too long, must be under 200 characters.",
+		}
+	}
+
 	newQuestion := Question{}
 	creator, _ := p.API.GetUser(args.UserId)
 	newQuestion.Creator = creator.Id
 	newQuestion.Question = givenQuestion
 
 	data := p.ReadFromStorage()
+
+	//check if there are already too many questions
+	if len(data.Questions) > 1000 {
+		return &model.CommandResponse{
+			ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+			Text:         "Your question has not been added: There are already more than 1000 questions. Ask an Admin to clean up before adding more questions.",
+		}
+	}
 
 	//Check if the question is already created
 	for _, question := range data.Questions {

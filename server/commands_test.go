@@ -341,11 +341,18 @@ func TestAddIcebreaker(t *testing.T) {
 		}
 		assert.NotNil(t, plugin.executeCommandIcebreakerAdd(args))
 	})
-
 	t.Run("No question given with whitespace", func(t *testing.T) {
 		plugin := &Plugin{}
 		args := &model.CommandArgs{
 			Command: "/icebreaker add ",
+		}
+		assert.NotNil(t, plugin.executeCommandIcebreakerAdd(args))
+	})
+
+	t.Run("Question too long", func(t *testing.T) {
+		plugin := &Plugin{}
+		args := &model.CommandArgs{
+			Command: "/icebreaker add 123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901",
 		}
 		assert.NotNil(t, plugin.executeCommandIcebreakerAdd(args))
 	})

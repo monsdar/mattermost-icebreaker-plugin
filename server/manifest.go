@@ -18,7 +18,7 @@ const manifestStr = `
   "homepage_url": "https://github.com/monsdar/mattermost-icebreaker-plugin",
   "support_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/issues",
   "release_notes_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/releases",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "min_server_version": "5.12.0",
   "server": {
     "executables": {
