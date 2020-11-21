@@ -16,7 +16,7 @@ const (
 	subcommandList                  = "list"
 	subcommandRemove                = "admin remove"
 	subcommandClearAll              = "admin clearall"
-	subcommandResetToDefault        = "admin reset qestions"
+	subcommandResetToDefault        = "admin reset questions"
 	commandIcebreakerAsk            = commandIcebreaker + " " + subcommandAsk
 	commandIcebreakerAdd            = commandIcebreaker + " " + subcommandAdd
 	commandIcebreakerList           = commandIcebreaker + " " + subcommandList
@@ -28,24 +28,24 @@ const (
 func getAutocompleteData() *model.AutocompleteData {
 	icebreakerCommand := model.NewAutocompleteData(commandIcebreaker, "[command]", "Ask an icebreaker, available subcommands: [ask], [add], [list], [admin remove], [admin clearall], [admin reset questions]")
 
-	ask := model.NewAutocompleteData("ask", "", "Ask a new icebreaker")
+	ask := model.NewAutocompleteData("ask", "", "This will randomly select an available user from the channel and ask a random icebreaker question")
 	icebreakerCommand.AddCommand(ask)
 
-	add := model.NewAutocompleteData(subcommandAdd, "[question]", "Add as new icebreaker question")
-	add.AddTextArgument("Question: Question you'd like to add", "[question]", "")
+	add := model.NewAutocompleteData(subcommandAdd, "[question]", "Add as new icebreaker question to the list")
+	add.AddTextArgument("Question: Question you'd like to add. Max 200 characters long.", "[question]", "")
 	icebreakerCommand.AddCommand(add)
 
-	list := model.NewAutocompleteData(subcommandList, "", "Show available questions")
+	list := model.NewAutocompleteData(subcommandList, "", "Show a list of available questions")
 	icebreakerCommand.AddCommand(list)
 
 	remove := model.NewAutocompleteData(subcommandRemove, "[id]", "Remove a question. Admin only")
 	remove.AddTextArgument("Id: Index of the question, as per `/icebreaker list`", "[id]", "")
 	icebreakerCommand.AddCommand(remove)
 
-	clearall := model.NewAutocompleteData(subcommandClearAll, "", "Remove ALL questions. Admin only")
+	clearall := model.NewAutocompleteData(subcommandClearAll, "", "Remove ALL questions. *WARNING: No backup is being made.* Admin only")
 	icebreakerCommand.AddCommand(clearall)
 
-	reset := model.NewAutocompleteData(subcommandResetToDefault, "", "Resets the questions to the default ones from this plugin. Admin only")
+	reset := model.NewAutocompleteData(subcommandResetToDefault, "", "Resets the questions to the default ones from this plugin. *WARNING: No backup is being made.* Admin only")
 	icebreakerCommand.AddCommand(reset)
 
 	return icebreakerCommand
@@ -140,7 +140,7 @@ func (p *Plugin) executeCommandIcebreakerResetToDefault(args *model.CommandArgs)
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
-		Text:         fmt.Sprintf("All questions have been reset to the default ones. Beware the pitchforks!"),
+		Text:         "All questions have been reset to the default ones. Beware the pitchforks!",
 	}
 }
 
@@ -191,11 +191,12 @@ func (p *Plugin) executeCommandIcebreakerList(args *model.CommandArgs) *model.Co
 		if err == nil {
 			creator = user.GetDisplayName("")
 		}
-		message = message + fmt.Sprintf("%d.\t@%s:\t%s\n", index, creator, question.Question)
+		message = message + fmt.Sprintf("%d.\t@%s:\t%s\n", index+1, creator, question.Question)
 	}
 
 	return &model.CommandResponse{
 		ResponseType: model.COMMAND_RESPONSE_TYPE_EPHEMERAL,
+		Username:     "icebreaker",
 		Text:         message,
 	}
 }

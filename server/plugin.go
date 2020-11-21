@@ -41,12 +41,15 @@ type IceBreakerData struct {
 const LenHistory int = 50
 
 // OnActivate is invoked when the plugin is activated.
-//
-// This demo implementation logs a message to the demo channel whenever the plugin is activated.
-// It also creates a demo bot account
 func (p *Plugin) OnActivate() error {
 	//init the rand
 	rand.Seed(1337)
+
+	//add default set of questions in case the list is empty
+	data := p.ReadFromStorage()
+	if len(data.Questions) == 0 {
+		p.FillDefaultQuestions()
+	}
 
 	//register all our commands
 	if err := p.registerCommands(); err != nil {

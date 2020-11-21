@@ -2,7 +2,7 @@
     "id": "com.nilsbrinkmann.icebreaker",
     "name": "Icebreaker Plugin",
     "description": "This plugin creates a bot which asks random questions",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "support_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/issues",
     "homepage_url": "https://github.com/monsdar/mattermost-icebreaker-plugin",
     "release_notes_url": "https://github.com/monsdar/mattermost-icebreaker-plugin/releases",
